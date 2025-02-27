@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -9,66 +9,95 @@ import {
   PhoneIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
+import {
+  addEmployee,
+  deleteEmployee,
+  getEmployees,
+  updateEmployee,
+} from "../../api/apiEmpleados";
 
 interface Employee {
   id: number;
-  name: string;
-  phone: string;
+  nombre: string;
+  telefono: string;
 }
-
-const initialEmployees: Employee[] = [
-  { id: 1, name: "Juan Pérez", phone: "123-456-7890" },
-  { id: 2, name: "María García", phone: "098-765-4321" },
-  { id: 3, name: "Carlos Rodríguez", phone: "555-123-4567" },
-  { id: 4, name: "Ana Martínez", phone: "777-888-9999" },
-  { id: 5, name: "Luis Fernández", phone: "111-222-3333" },
-];
-
 function Empleados() {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const data = await getEmployees();
+        setEmployees(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [newEmployee, setNewEmployee] = useState({ name: "", phone: "" });
+  const [newEmployee, setNewEmployee] = useState({ nombre: "", telefono: "" });
   const [deleteConfirmation, setDeleteConfirmation] = useState<number | null>(
     null
   );
 
   const filteredEmployees = employees.filter((employee) =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase())
+    employee.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleOpenForm = (employee: Employee | null = null) => {
     if (employee) {
       setEditingEmployee(employee);
-      setNewEmployee({ name: employee.name, phone: employee.phone });
+      setNewEmployee({ nombre: employee.nombre, telefono: employee.telefono });
     } else {
       setEditingEmployee(null);
-      setNewEmployee({ name: "", phone: "" });
+      setNewEmployee({ nombre: "", telefono: "" });
     }
     setIsFormOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newEmployee.name && newEmployee.phone) {
+    if (newEmployee.nombre && newEmployee.telefono) {
+      //Si es editar empleado
       if (editingEmployee) {
-        setEmployees(
-          employees.map((emp) =>
-            emp.id === editingEmployee.id ? { ...emp, ...newEmployee } : emp
-          )
-        );
+        try {
+          await updateEmployee({ ...newEmployee, id: editingEmployee.id });
+          setEmployees(
+            employees.map((emp) =>
+              emp.id === editingEmployee.id ? { ...emp, ...newEmployee } : emp
+            )
+          );
+        } catch (error) {
+          console.log(error);
+        }
+        //Crear un nuevo empleado
       } else {
         setEmployees([...employees, { ...newEmployee, id: Date.now() }]);
+        try {
+          await addEmployee({
+            nombre: newEmployee.nombre,
+            telefono: newEmployee.telefono,
+          });
+        } catch (error) {
+          console.log(error);
+        }
       }
-      setNewEmployee({ name: "", phone: "" });
+      setNewEmployee({ nombre: "", telefono: "" });
       setIsFormOpen(false);
       setEditingEmployee(null);
     }
   };
 
-  const handleDelete = (id: number) => {
-    setEmployees(employees.filter((emp) => emp.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      setEmployees(employees.filter((emp) => emp.id !== id));
+      await deleteEmployee(id);
+    } catch (error) {
+      console.log(error);
+    }
     setDeleteConfirmation(null);
   };
 
@@ -99,10 +128,10 @@ function Empleados() {
               onClick={() => handleOpenForm(employee)}
               className="cursor-pointer"
             >
-              <h2 className="text-xl font-semibold mb-2">{employee.name}</h2>
+              <h2 className="text-xl font-semibold mb-2">{employee.nombre}</h2>
               <div className="flex items-center text-gray-600">
                 <PhoneIcon className="h-5 w-5 mr-2" />
-                <span>{employee.phone}</span>
+                <span>{employee.telefono}</span>
               </div>
             </div>
             <button
@@ -146,7 +175,7 @@ function Empleados() {
       </button>
 
       {isFormOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+        <div className="fixed inset-0 bg-black opacity-90 overflow-y-auto h-full w-full flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">
@@ -171,9 +200,9 @@ function Empleados() {
                   type="text"
                   id="name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newEmployee.name}
+                  value={newEmployee.nombre}
                   onChange={(e) =>
-                    setNewEmployee({ ...newEmployee, name: e.target.value })
+                    setNewEmployee({ ...newEmployee, nombre: e.target.value })
                   }
                   required
                 />
@@ -189,9 +218,9 @@ function Empleados() {
                   type="tel"
                   id="phone"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newEmployee.phone}
+                  value={newEmployee.telefono}
                   onChange={(e) =>
-                    setNewEmployee({ ...newEmployee, phone: e.target.value })
+                    setNewEmployee({ ...newEmployee, telefono: e.target.value })
                   }
                   required
                 />

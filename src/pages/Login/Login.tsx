@@ -1,21 +1,31 @@
-"use client";
-
+import { Toaster, toast } from "react-hot-toast";
 import type React from "react";
 import { useState } from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/solid";
+import { login } from "../../api/loginApi";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Here you would typically handle the login logic
-    console.log("Login attempt with:", { email, password });
+    try {
+      const response = await login(email, password);
+      localStorage.setItem("login", JSON.stringify(response));
+      toast.success("Inicio de sesión exitoso!");
+      navigate("/");
+    } catch (error) {
+      toast.error(error.response.data.error as string);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Toaster />
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

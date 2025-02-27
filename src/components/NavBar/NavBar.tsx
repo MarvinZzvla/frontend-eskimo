@@ -23,10 +23,14 @@ const navItems = [
   { name: "Configuracion", icon: Settings, href: "/settings" },
 ];
 
+const onLogOut = () => {
+  localStorage.removeItem("login");
+  document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+};
+
 function NavBar({}: Props) {
   const [isExpanded, setIsExpanded] = useState(true);
   const navigate = useNavigate();
-
   return (
     <nav
       className={`bg-gray-900 text-white h-screen transition-all duration-300 ease-in-out ${
@@ -72,7 +76,10 @@ function NavBar({}: Props) {
       </ul>
       <button
         className="flex items-center p-4 hover:bg-gray-800 transition-colors duration-200"
-        onClick={() => navigate("/login")}
+        onClick={() => {
+          onLogOut();
+          navigate("/login");
+        }}
       >
         <LogOut size={24} />
         <span

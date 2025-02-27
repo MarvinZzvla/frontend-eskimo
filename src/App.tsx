@@ -15,6 +15,7 @@ import Login from "./pages/Login/Login";
 import Settings from "./pages/Settings/Settings";
 import Users from "./pages/Settings/pages/Users/Users";
 import Negocio from "./pages/Settings/pages/Negocio/Negocio";
+import ProtectedRoute from "./components/ProtectedRoutes/ProtectedRoute";
 function App() {
   const location = useLocation();
   const hideNavBarRoutes = ["/login"];
@@ -23,24 +24,29 @@ function App() {
       {!hideNavBarRoutes.includes(location.pathname) && <NavBar />}
       <div className="flex-1 p-4">
         <Routes>
-          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/asignacion" element={<Asignacion />} />
-          <Route path="/ventas" element={<Ventas />} />
-          <Route path="/inventario/negocio" element={<Productos />} />
-          <Route path="/inventario/empleado" element={<InventarioEmpleado />} />
-          <Route path="/inventario" element={<Inventario />} />
-          <Route path="/empleados" element={<Empleados />} />
-          <Route path="/reportes" element={<Reportes />} />
-          <Route path="/reportes/sales" element={<ReportesVentas />} />
-          <Route
-            path="reportes/employee-sales"
-            element={<ReportesVentasEmpleado />}
-          />
-          <Route path="/reportes/products" element={<ReportesProducto />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/settings/negocio" element={<Negocio />} />
-          <Route path="/settings/users" element={<Users />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/asignacion" element={<Asignacion />} />
+            <Route path="/ventas" element={<Ventas />} />
+            <Route path="/inventario/negocio" element={<Productos />} />
+            <Route
+              path="/inventario/empleado"
+              element={<InventarioEmpleado />}
+            />
+            <Route path="/inventario" element={<Inventario />} />
+            <Route path="/empleados" element={<Empleados />} />
+            <Route path="/reportes" element={<Reportes />} />
+            <Route path="/reportes/sales" element={<ReportesVentas />} />
+            <Route
+              path="reportes/employee-sales"
+              element={<ReportesVentasEmpleado />}
+            />
+            <Route path="/reportes/products" element={<ReportesProducto />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/settings/negocio" element={<Negocio />} />
+            <Route path="/settings/users" element={<Users />} />
+          </Route>
           <Route path="*" element={<h1>Not Found</h1>} />
         </Routes>
       </div>
