@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import {
   UserIcon,
-  PhoneIcon,
   EnvelopeIcon,
   LockClosedIcon,
 } from "@heroicons/react/24/solid";
 
 function Register({ onClose }: { onClose: (s: boolean) => void }) {
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
@@ -18,7 +16,6 @@ function Register({ onClose }: { onClose: (s: boolean) => void }) {
     // Here you would typically handle the registration logic
     console.log("Registration attempt with:", {
       name,
-      phone,
       email,
       password,
       role,
@@ -26,7 +23,7 @@ function Register({ onClose }: { onClose: (s: boolean) => void }) {
   };
 
   return (
-    <div className="flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 rounded-xl">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -58,29 +55,7 @@ function Register({ onClose }: { onClose: (s: boolean) => void }) {
                 />
               </div>
             </div>
-            <div>
-              <label htmlFor="phone" className="sr-only">
-                Teléfono
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <PhoneIcon
-                    className="h-5 w-5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </div>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Teléfono"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
-            </div>
+
             <div>
               <label htmlFor="email-address" className="sr-only">
                 Correo electrónico

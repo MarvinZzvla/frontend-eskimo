@@ -16,6 +16,7 @@ import Settings from "./pages/Settings/Settings";
 import Users from "./pages/Settings/pages/Users/Users";
 import Negocio from "./pages/Settings/pages/Negocio/Negocio";
 import ProtectedRoute from "./components/ProtectedRoutes/ProtectedRoute";
+import InventarioNegocio from "./pages/Inventario/components/InventarioNegocio";
 function App() {
   const location = useLocation();
   const hideNavBarRoutes = ["/login"];
@@ -29,7 +30,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/asignacion" element={<Asignacion />} />
             <Route path="/ventas" element={<Ventas />} />
-            <Route path="/inventario/negocio" element={<Productos />} />
+            <Route path="/productos" element={<Productos />} />
+            <Route path="/inventario/negocio" element={<InventarioNegocio />} />
             <Route
               path="/inventario/empleado"
               element={<InventarioEmpleado />}

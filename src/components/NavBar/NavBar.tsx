@@ -10,6 +10,7 @@ import {
   LogOut,
   FileText,
   Settings,
+  Package,
 } from "lucide-react";
 
 type Props = {};
@@ -17,6 +18,7 @@ type Props = {};
 const navItems = [
   { name: "Asignación", icon: ClipboardList, href: "/asignacion" },
   { name: "Ventas", icon: DollarSign, href: "/ventas" },
+  { name: "Productos", icon: Package, href: "/productos" },
   { name: "Inventario", icon: Warehouse, href: "/inventario" },
   { name: "Empleados", icon: Users, href: "/empleados" },
   { name: "Reportes", icon: FileText, href: "/reportes" },

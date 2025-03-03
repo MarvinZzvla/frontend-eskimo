@@ -1,72 +1,55 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlusIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { addProduct, getProducts } from "../../api/apiProductos";
 
-interface Product {
+export interface Product {
   id: number;
-  name: string;
-  buyPrice: number;
-  sellPrice: number;
-  quantity: number;
+  producto: string;
+  precio: number;
+  precioVenta: number;
+  cantidad: number;
   presentation: "Caja" | "Bolsa" | "Unidad";
   units?: number;
 }
 
-const initialProducts: Product[] = [
-  {
-    id: 1,
-    name: "Producto 1",
-    buyPrice: 10,
-    sellPrice: 15,
-    quantity: 20,
-    presentation: "Unidad",
-  },
-  {
-    id: 2,
-    name: "Producto 2",
-    buyPrice: 20,
-    sellPrice: 30,
-    quantity: 8,
-    presentation: "Caja",
-    units: 12,
-  },
-  {
-    id: 3,
-    name: "Producto 3",
-    buyPrice: 5,
-    sellPrice: 8,
-    quantity: 3,
-    presentation: "Bolsa",
-    units: 50,
-  },
-];
-
 function Productos() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [quantityFilter, setQuantityFilter] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
-    name: "",
-    buyPrice: 0,
-    sellPrice: 0,
-    quantity: 0,
+    producto: "",
+    precio: 0,
+    precioVenta: 0,
+    cantidad: 0,
     presentation: "Unidad",
   });
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setProducts(await getProducts());
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
+    const matchesSearch = product.producto
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesQuantity =
       quantityFilter === "all" ||
-      (quantityFilter === "normal" && product.quantity > 10) ||
+      (quantityFilter === "normal" && product.cantidad > 10) ||
       (quantityFilter === "medium" &&
-        product.quantity <= 10 &&
-        product.quantity > 5) ||
-      (quantityFilter === "low" && product.quantity <= 5);
+        product.cantidad <= 10 &&
+        product.cantidad > 5) ||
+      (quantityFilter === "low" && product.cantidad <= 5);
     return matchesSearch && matchesQuantity;
   });
 
@@ -77,32 +60,38 @@ function Productos() {
     setNewProduct((prev) => ({
       ...prev,
       [name]:
-        name === "buyPrice" ||
-        name === "sellPrice" ||
-        name === "quantity" ||
+        name === "precio" ||
+        name === "precioVenta" ||
+        name === "cantidad" ||
         name === "units"
           ? Number(value)
           : value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
-      newProduct.name &&
-      newProduct.buyPrice &&
-      newProduct.sellPrice &&
-      newProduct.quantity
+      newProduct.producto &&
+      newProduct.precio &&
+      newProduct.precioVenta &&
+      newProduct.cantidad
     ) {
+      addProduct(newProduct as Product);
       setProducts((prev) => [
         ...prev,
-        { ...(newProduct as Product), id: Date.now() },
+        {
+          ...(newProduct as Product),
+          id: Date.now(),
+          cantidad: (newProduct.cantidad || 1) * (newProduct.units || 1),
+        },
       ]);
+
       setNewProduct({
-        name: "",
-        buyPrice: 0,
-        sellPrice: 0,
-        quantity: 0,
+        producto: "",
+        precio: 0,
+        precioVenta: 0,
+        cantidad: 0,
         presentation: "Unidad",
       });
       setIsFormOpen(false);
@@ -140,34 +129,28 @@ function Productos() {
         {filteredProducts.map((product) => (
           <div key={product.id} className="bg-white rounded-lg shadow-md p-4">
             <h2 className="text-xl font-semibold mb-2 text-gray-800">
-              {product.name}
+              {product.producto}
             </h2>
             <p className="text-gray-600">
-              Precio de compra: ${product.buyPrice.toFixed(2)}
+              Precio de compra: ${product.precio.toFixed(2)}
             </p>
             <p className="text-gray-600">
-              Precio de venta: ${product.sellPrice.toFixed(2)}
+              Precio de venta: ${product.precioVenta.toFixed(2)}
             </p>
             <p className="text-green-600 font-medium">
-              Ganancia: ${(product.sellPrice - product.buyPrice).toFixed(2)}
+              Ganancia: ${(product.precioVenta - product.precio).toFixed(2)}
             </p>
             <p
               className={`font-medium ${
-                product.quantity > 10
+                product.cantidad > 10
                   ? "text-green-600"
-                  : product.quantity > 5
+                  : product.cantidad > 5
                   ? "text-orange-500"
                   : "text-red-600"
               }`}
             >
-              Cantidad disponible: {product.quantity}
+              Cantidad disponible: {product.cantidad}
             </p>
-            <p className="text-gray-600">
-              Presentación: {product.presentation}
-            </p>
-            {product.units && (
-              <p className="text-gray-600">Unidades: {product.units}</p>
-            )}
           </div>
         ))}
       </div>
@@ -188,42 +171,51 @@ function Productos() {
             <h2 className="text-2xl font-bold mb-4 text-gray-800">
               Agregar Nuevo Producto
             </h2>
+            <label className="block mb-2 text-gray-700">
+              Nombre del producto
+            </label>
             <input
               type="text"
-              name="name"
+              name="producto"
               placeholder="Nombre del producto"
               className="w-full mb-2 px-3 py-2 border rounded"
-              value={newProduct.name}
+              value={newProduct.producto}
               onChange={handleInputChange}
               required
             />
+            <label className="block mb-2 text-gray-700">Precio de compra</label>
             <input
               type="number"
-              name="buyPrice"
+              name="precio"
               placeholder="Precio de compra"
               className="w-full mb-2 px-3 py-2 border rounded"
-              value={newProduct.buyPrice || ""}
+              value={newProduct.precio || ""}
               onChange={handleInputChange}
               required
             />
+            <label className="block mb-2 text-gray-700">Precio de venta</label>
             <input
               type="number"
-              name="sellPrice"
+              name="precioVenta"
               placeholder="Precio de venta"
               className="w-full mb-2 px-3 py-2 border rounded"
-              value={newProduct.sellPrice || ""}
+              value={newProduct.precioVenta || ""}
               onChange={handleInputChange}
               required
             />
+            <label className="block mb-2 text-gray-700">
+              Cantidad disponible
+            </label>
             <input
               type="number"
-              name="quantity"
+              name="cantidad"
               placeholder="Cantidad disponible"
               className="w-full mb-2 px-3 py-2 border rounded"
-              value={newProduct.quantity || ""}
+              value={newProduct.cantidad || ""}
               onChange={handleInputChange}
               required
             />
+            <label className="block mb-2 text-gray-700">Presentación</label>
             <select
               name="presentation"
               className="w-full mb-2 px-3 py-2 border rounded"
@@ -237,15 +229,20 @@ function Productos() {
             </select>
             {(newProduct.presentation === "Caja" ||
               newProduct.presentation === "Bolsa") && (
-              <input
-                type="number"
-                name="units"
-                placeholder="Unidades por caja/bolsa"
-                className="w-full mb-2 px-3 py-2 border rounded"
-                value={newProduct.units || ""}
-                onChange={handleInputChange}
-                required
-              />
+              <>
+                <label className="block mb-2 text-gray-700">
+                  Unidades por caja/bolsa
+                </label>
+                <input
+                  type="number"
+                  name="units"
+                  placeholder="Unidades por caja/bolsa"
+                  className="w-full mb-2 px-3 py-2 border rounded"
+                  value={newProduct.units || ""}
+                  onChange={handleInputChange}
+                  required
+                />
+              </>
             )}
             <div className="flex justify-end space-x-2">
               <button

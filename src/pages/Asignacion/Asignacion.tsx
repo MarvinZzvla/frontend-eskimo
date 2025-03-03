@@ -6,9 +6,9 @@ import {
   CheckIcon,
 } from "@heroicons/react/24/solid";
 
-interface Product {
+export interface Product {
   id: number;
-  name: string;
+  producto: string;
 }
 
 interface Employee {
@@ -25,16 +25,16 @@ interface Assignment {
 }
 
 const initialProducts: Product[] = [
-  { id: 1, name: "Producto 1" },
-  { id: 2, name: "Producto 2" },
-  { id: 3, name: "Producto 3" },
-  { id: 4, name: "Producto 4" },
-  { id: 5, name: "Producto 5" },
-  { id: 6, name: "Producto 6" },
-  { id: 7, name: "Producto 7" },
-  { id: 8, name: "Producto 8" },
-  { id: 9, name: "Producto 9" },
-  { id: 10, name: "Producto 10" },
+  { id: 1, producto: "Producto 1" },
+  { id: 2, producto: "Producto 2" },
+  { id: 3, producto: "Producto 3" },
+  { id: 4, producto: "Producto 4" },
+  { id: 5, producto: "Producto 5" },
+  { id: 6, producto: "Producto 6" },
+  { id: 7, producto: "Producto 7" },
+  { id: 8, producto: "Producto 8" },
+  { id: 9, producto: "Producto 9" },
+  { id: 10, producto: "Producto 10" },
 ];
 
 const initialEmployees: Employee[] = [
@@ -51,13 +51,13 @@ const initialEmployees: Employee[] = [
 ];
 
 interface SearchableDropdownProps {
-  items: Array<{ id: number; name: string }>;
+  items: Array<{ id: number; name?: string; producto?: string }>;
   selectedItem: number;
   setSelectedItem: (id: number) => void;
   placeholder: string;
 }
 
-function SearchableDropdown({
+export function SearchableDropdown({
   items,
   selectedItem,
   setSelectedItem,
@@ -67,8 +67,10 @@ function SearchableDropdown({
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef(null);
 
-  const filteredItems = items.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredItems = items.filter(
+    (item) =>
+      (item.producto?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
+      (item.name?.toLowerCase() ?? "").includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {
@@ -92,7 +94,8 @@ function SearchableDropdown({
       >
         <span>
           {selectedItem
-            ? items.find((i) => i.id === selectedItem)?.name
+            ? items.find((i) => i.id === selectedItem)?.name ||
+              items.find((i) => i.id === selectedItem)?.producto
             : placeholder}
         </span>
         <ChevronDownIcon className="h-5 w-5 text-gray-400" />
@@ -118,7 +121,7 @@ function SearchableDropdown({
                   setIsOpen(false);
                 }}
               >
-                {item.name}
+                {item.name || item.producto}
                 {selectedItem === item.id && (
                   <CheckIcon className="h-5 w-5 text-blue-500" />
                 )}
@@ -174,7 +177,8 @@ function Asignacion() {
         id: Date.now(),
         employeeName:
           employees.find((e) => e.id === selectedEmployee)?.name || "",
-        productName: products.find((p) => p.id === selectedProduct)?.name || "",
+        productName:
+          products.find((p) => p.id === selectedProduct)?.producto || "",
         quantity,
         assignedAt: new Date(),
       };

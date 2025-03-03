@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -7,48 +7,56 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/solid";
 import Register from "./components/Register/Register";
-import { User } from "lucide-react";
+import { MailIcon, User } from "lucide-react";
+import { getUsers } from "../../../../api/apiUsers";
 
 interface User {
   id: number;
   name: string;
-  phone: string;
+  email: string;
   role: string;
 }
-
-const initialUsers: User[] = [
-  { id: 1, name: "Juan Pérez", phone: "123-456-7890", role: "Administrador" },
-  { id: 2, name: "María García", phone: "098-765-4321", role: "Empleado" },
-];
-
 function Users() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [newUser, setNewUser] = useState({ name: "", phone: "", role: "" });
+  const [newUser, setNewUser] = useState({ name: "", email: "", role: "" });
   const [deleteConfirmation, setDeleteConfirmation] = useState<number | null>(
     null
   );
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const users = await getUsers();
+        setUsers(users);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleOpenForm = (user: User | null = null) => {
+    console.log(user);
     if (user) {
       setEditingUser(user);
-      setNewUser({ name: user.name, phone: user.phone, role: user.role });
+      setNewUser({ name: user.name, email: user.email, role: user.role });
     } else {
       setEditingUser(null);
-      setNewUser({ name: "", phone: "", role: "" });
+      setNewUser({ name: "", email: "", role: "" });
     }
     setIsFormOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newUser.name && newUser.phone && newUser.role) {
+    if (newUser.name && newUser.email && newUser.role) {
       if (editingUser) {
         setUsers(
           users.map((usr) =>
@@ -58,7 +66,7 @@ function Users() {
       } else {
         setUsers([...users, { ...newUser, id: Date.now() }]);
       }
-      setNewUser({ name: "", phone: "", role: "" });
+      setNewUser({ name: "", email: "", role: "" });
       setIsFormOpen(false);
       setEditingUser(null);
     }
@@ -98,8 +106,8 @@ function Users() {
             >
               <h2 className="text-xl font-semibold mb-2">{user.name}</h2>
               <div className="flex items-center text-gray-600">
-                <PhoneIcon className="h-5 w-5 mr-2" />
-                <span>{user.phone}</span>
+                <MailIcon className="h-5 w-5 mr-2" />
+                <span>{user.email}</span>
               </div>
               <div className="flex items-center text-gray-600">
                 <User className="h-5 w-5 mr-2" />
