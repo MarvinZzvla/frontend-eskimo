@@ -3,7 +3,7 @@
 import type React from "react";
 import { useEffect, useState } from "react";
 import { PlusIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import { addProduct, getProducts } from "../../api/apiProductos";
+import { addProduct, editProduct, getProducts } from "../../api/apiProductos";
 
 export interface Product {
   id: number;
@@ -20,6 +20,7 @@ function Productos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [quantityFilter, setQuantityFilter] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     producto: "",
     precio: 0,
@@ -53,6 +54,22 @@ function Productos() {
     return matchesSearch && matchesQuantity;
   });
 
+  const handleNewProduct = () => {
+    setIsFormOpen(true);
+    setIsEditing(false);
+    setNewProduct({
+      producto: "",
+      precio: 0,
+      precioVenta: 0,
+      cantidad: 0,
+      presentation: "Unidad",
+    });
+  };
+  const handleEdit = (product: Product) => {
+    setNewProduct(product);
+    setIsFormOpen(true);
+    setIsEditing(true);
+  };
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -77,15 +94,27 @@ function Productos() {
       newProduct.precioVenta &&
       newProduct.cantidad
     ) {
-      addProduct(newProduct as Product);
-      setProducts((prev) => [
-        ...prev,
-        {
-          ...(newProduct as Product),
-          id: Date.now(),
-          cantidad: (newProduct.cantidad || 1) * (newProduct.units || 1),
-        },
-      ]);
+      if (isEditing) {
+        // Edit product
+        await editProduct(newProduct as Product);
+        setProducts((prev) =>
+          prev.map((product) =>
+            product.id === newProduct.id ? newProduct : product
+          )
+        );
+        setIsEditing(false);
+      } else {
+        // Add product
+        addProduct(newProduct as Product);
+        setProducts((prev) => [
+          ...prev,
+          {
+            ...(newProduct as Product),
+            id: products.length ? products[products.length - 1].id + 1 : 1,
+            cantidad: (newProduct.cantidad || 1) * (newProduct.units || 1),
+          },
+        ]);
+      }
 
       setNewProduct({
         producto: "",
@@ -99,7 +128,7 @@ function Productos() {
   };
 
   return (
-    <div className="container mx-auto p-4 bg-gray-100 min-h-screen">
+    <div className="container mx-auto p-4 bg-gray-100 min-h-screen max-h-80 overflow-y-auto">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Productos</h1>
 
       <div className="mb-4 flex space-x-4">
@@ -127,7 +156,11 @@ function Productos() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredProducts.map((product) => (
-          <div key={product.id} className="bg-white rounded-lg shadow-md p-4">
+          <div
+            key={product.id}
+            className="bg-white rounded-lg shadow-md p-4 hover:bg-gray-200 hover:cursor-pointer"
+            onClick={() => handleEdit(product)}
+          >
             <h2 className="text-xl font-semibold mb-2 text-gray-800">
               {product.producto}
             </h2>
@@ -157,7 +190,9 @@ function Productos() {
 
       <button
         className="fixed bottom-8 right-8 bg-blue-500 text-white rounded-full p-4 shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-        onClick={() => setIsFormOpen(true)}
+        onClick={() => {
+          handleNewProduct();
+        }}
       >
         <PlusIcon className="h-6 w-6" />
       </button>
@@ -169,7 +204,7 @@ function Productos() {
             className="bg-white rounded-lg p-6 w-full max-w-md"
           >
             <h2 className="text-2xl font-bold mb-4 text-gray-800">
-              Agregar Nuevo Producto
+              {isEditing ? "Editar producto" : "Agregar producto"}
             </h2>
             <label className="block mb-2 text-gray-700">
               Nombre del producto
@@ -203,45 +238,49 @@ function Productos() {
               onChange={handleInputChange}
               required
             />
-            <label className="block mb-2 text-gray-700">
-              Cantidad disponible
-            </label>
-            <input
-              type="number"
-              name="cantidad"
-              placeholder="Cantidad disponible"
-              className="w-full mb-2 px-3 py-2 border rounded"
-              value={newProduct.cantidad || ""}
-              onChange={handleInputChange}
-              required
-            />
-            <label className="block mb-2 text-gray-700">Presentación</label>
-            <select
-              name="presentation"
-              className="w-full mb-2 px-3 py-2 border rounded"
-              value={newProduct.presentation}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="Unidad">Unidad</option>
-              <option value="Caja">Caja</option>
-              <option value="Bolsa">Bolsa</option>
-            </select>
-            {(newProduct.presentation === "Caja" ||
-              newProduct.presentation === "Bolsa") && (
+            {!isEditing && (
               <>
                 <label className="block mb-2 text-gray-700">
-                  Unidades por caja/bolsa
+                  Cantidad disponible
                 </label>
                 <input
                   type="number"
-                  name="units"
-                  placeholder="Unidades por caja/bolsa"
+                  name="cantidad"
+                  placeholder="Cantidad disponible"
                   className="w-full mb-2 px-3 py-2 border rounded"
-                  value={newProduct.units || ""}
+                  value={newProduct.cantidad || ""}
                   onChange={handleInputChange}
                   required
                 />
+                <label className="block mb-2 text-gray-700">Presentación</label>
+                <select
+                  name="presentation"
+                  className="w-full mb-2 px-3 py-2 border rounded"
+                  value={newProduct.presentation}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="Unidad">Unidad</option>
+                  <option value="Caja">Caja</option>
+                  <option value="Bolsa">Bolsa</option>
+                </select>
+                {(newProduct.presentation === "Caja" ||
+                  newProduct.presentation === "Bolsa") && (
+                  <>
+                    <label className="block mb-2 text-gray-700">
+                      Unidades por caja/bolsa
+                    </label>
+                    <input
+                      type="number"
+                      name="units"
+                      placeholder="Unidades por caja/bolsa"
+                      className="w-full mb-2 px-3 py-2 border rounded"
+                      value={newProduct.units || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </>
+                )}
               </>
             )}
             <div className="flex justify-end space-x-2">
@@ -256,7 +295,7 @@ function Productos() {
                 type="submit"
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
-                Agregar
+                {isEditing ? "Editar" : "Agregar"}
               </button>
             </div>
           </form>

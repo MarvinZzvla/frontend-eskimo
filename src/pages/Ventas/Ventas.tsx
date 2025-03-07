@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -10,16 +8,18 @@ import {
   TrashIcon,
   UserIcon,
 } from "@heroicons/react/24/solid";
+import { getEmployees } from "../../api/apiEmpleados";
+import { getProducts } from "../../api/apiProductos";
 
 interface Employee {
   id: number;
-  name: string;
+  nombre: string;
 }
 
 interface Product {
   id: number;
-  name: string;
-  price: number;
+  producto: string;
+  precio: number;
 }
 
 interface SaleItem {
@@ -31,31 +31,23 @@ interface SaleItem {
   total: number;
 }
 
-const initialEmployees: Employee[] = [
-  { id: 1, name: "Juan Pérez" },
-  { id: 2, name: "María García" },
-  { id: 3, name: "Carlos Rodríguez" },
-  { id: 4, name: "Ana Martínez" },
-  { id: 5, name: "Luis Fernández" },
-];
-
 const initialProducts: Product[] = [
-  { id: 1, name: "Producto 1", price: 10.99 },
-  { id: 2, name: "Producto 2", price: 15.99 },
-  { id: 3, name: "Producto 3", price: 20.99 },
-  { id: 4, name: "Producto 4", price: 25.99 },
-  { id: 5, name: "Producto 5", price: 30.99 },
+  { id: 1, producto: "Producto 1", precio: 10.99 },
+  { id: 2, producto: "Producto 2", precio: 15.99 },
+  { id: 3, producto: "Producto 3", precio: 20.99 },
+  { id: 4, producto: "Producto 4", precio: 25.99 },
+  { id: 5, producto: "Producto 5", precio: 30.99 },
 ];
 
 interface SearchableDropdownProps {
-  items: Array<{ id: number; name: string }>;
+  items: Array<{ id: number; nombre?: string; producto?: string }>;
   selectedItem: number;
   setSelectedItem: (id: number) => void;
   placeholder: string;
   disabled?: boolean;
 }
 
-function SearchableDropdown({
+export function SearchableDropdown({
   items,
   selectedItem,
   setSelectedItem,
@@ -66,8 +58,10 @@ function SearchableDropdown({
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef(null);
 
-  const filteredItems = items.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredItems = items.filter(
+    (item) =>
+      item.producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {
@@ -93,7 +87,8 @@ function SearchableDropdown({
       >
         <span>
           {selectedItem
-            ? items.find((i) => i.id === selectedItem)?.name
+            ? items.find((i) => i.id === selectedItem)?.producto ||
+              items.find((i) => i.id === selectedItem)?.nombre
             : placeholder}
         </span>
         <ChevronDownIcon
@@ -121,7 +116,7 @@ function SearchableDropdown({
                   setIsOpen(false);
                 }}
               >
-                {item.name}
+                {item.nombre || item.producto}
                 {selectedItem === item.id && (
                   <CheckIcon className="h-5 w-5 text-blue-500" />
                 )}
@@ -135,8 +130,8 @@ function SearchableDropdown({
 }
 
 function Ventas() {
-  const [employees] = useState<Employee[]>(initialEmployees);
-  const [products] = useState<Product[]>(initialProducts);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [selectedEmployee, setSelectedEmployee] = useState<number>(0);
   const [selectedProduct, setSelectedProduct] = useState<number>(0);
   const [salePrice, setSalePrice] = useState<number>(0);
@@ -144,9 +139,22 @@ function Ventas() {
   const [cart, setCart] = useState<SaleItem[]>([]);
 
   useEffect(() => {
+    const fetchEmpleados = async () => {
+      setEmployees(await getEmployees());
+    };
+    fetchEmpleados();
+  }, []);
+  useEffect(() => {
+    const fetchProductos = async () => {
+      setProducts(await getProducts());
+    };
+    fetchProductos();
+  }, []);
+
+  useEffect(() => {
     const product = products.find((p) => p.id === selectedProduct);
     if (product) {
-      setSalePrice(product.price);
+      setSalePrice(product.precio);
     }
   }, [selectedProduct, products]);
 
@@ -156,7 +164,8 @@ function Ventas() {
       const newSale: SaleItem = {
         id: Date.now(),
         productId: selectedProduct,
-        productName: products.find((p) => p.id === selectedProduct)?.name || "",
+        productName:
+          products.find((p) => p.id === selectedProduct)?.producto || "",
         quantity: quantity,
         price: salePrice,
         total: salePrice * quantity,
@@ -284,7 +293,8 @@ function Ventas() {
           <div className="mb-4 p-3 bg-blue-100 rounded-md flex items-center">
             <UserIcon className="h-5 w-5 text-blue-500 mr-2" />
             <span className="font-medium">
-              Empleado: {employees.find((e) => e.id === selectedEmployee)?.name}
+              Empleado:{" "}
+              {employees.find((e) => e.id === selectedEmployee)?.nombre}
             </span>
           </div>
         )}

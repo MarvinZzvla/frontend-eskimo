@@ -17,3 +17,11 @@ export const addProduct = async (product: Product) => {
     throw new Error(error);
   }
 };
+
+export const editProduct = async (product: Product) => {
+  try {
+    await apiClient.put(`/products/${product.id}`, product);
+  } catch (error) {
+    throw new Error(error);
+  }
+};
