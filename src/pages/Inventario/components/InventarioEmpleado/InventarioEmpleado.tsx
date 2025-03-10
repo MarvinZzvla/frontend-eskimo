@@ -6,6 +6,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { getEmployees } from "../../../../api/apiEmpleados";
 import { getAssignmentsByEmpleado } from "../../../../api/apiInventario";
+import { getVentasByEmpleado } from "../../../../api/apiVentas";
 
 interface Employee {
   id: number;
@@ -21,84 +22,11 @@ interface InventoryItem {
 
 interface Sale {
   id: number;
-  productName: string;
-  quantity: number;
+  producto: string;
+  cantidad: number;
   totalAmount: number;
   saleDate: string;
 }
-
-const sales: Sale[] = [
-  {
-    id: 1,
-    productName: "Laptop Dell XPS",
-    quantity: 2,
-    totalAmount: 2500,
-    saleDate: "2023-05-17",
-  },
-  {
-    id: 2,
-    productName: 'Monitor LG 27"',
-    quantity: 1,
-    totalAmount: 300,
-    saleDate: "2023-05-18",
-  },
-  {
-    id: 3,
-    productName: "Teclado Mecánico",
-    quantity: 5,
-    totalAmount: 500,
-    saleDate: "2023-05-19",
-  },
-  {
-    id: 4,
-    productName: "Mouse Inalámbrico",
-    quantity: 8,
-    totalAmount: 320,
-    saleDate: "2023-05-20",
-  },
-  {
-    id: 5,
-    productName: "Auriculares Bluetooth",
-    quantity: 3,
-    totalAmount: 450,
-    saleDate: "2023-05-21",
-  },
-  {
-    id: 6,
-    productName: "Cámara Web HD",
-    quantity: 4,
-    totalAmount: 200,
-    saleDate: "2023-05-22",
-  },
-  {
-    id: 7,
-    productName: "Disco Duro Externo",
-    quantity: 2,
-    totalAmount: 180,
-    saleDate: "2023-05-23",
-  },
-  {
-    id: 8,
-    productName: "Impresora Multifuncional",
-    quantity: 1,
-    totalAmount: 350,
-    saleDate: "2023-05-24",
-  },
-  {
-    id: 9,
-    productName: "Laptop Dell XPS",
-    quantity: 1,
-    totalAmount: 1250,
-    saleDate: "2023-05-25",
-  },
-  {
-    id: 10,
-    productName: 'Monitor LG 27"',
-    quantity: 2,
-    totalAmount: 600,
-    saleDate: "2023-05-26",
-  },
-];
 
 function InventarioEmpleado() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
@@ -106,12 +34,13 @@ function InventarioEmpleado() {
   );
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
 
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date(Date.now() + 86400000).toISOString().split("T")[0]
   );
   const [searchTerm, setSearchTerm] = useState<string>("");
 
@@ -133,6 +62,16 @@ function InventarioEmpleado() {
       }
     };
     fetchInventario();
+  }, [selectedEmployee]);
+  useEffect(() => {
+    const fetchSales = async () => {
+      if (selectedEmployee) {
+        setSales(
+          await getVentasByEmpleado(selectedEmployee.id, startDate, endDate)
+        );
+      }
+    };
+    fetchSales();
   }, [selectedEmployee]);
 
   const filteredInventory = inventoryItems.filter((item) =>
@@ -301,16 +240,16 @@ function InventarioEmpleado() {
                   {filteredSales.map((sale) => (
                     <tr key={sale.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {sale.productName}
+                        {sale.producto}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {sale.quantity}
+                        {sale.cantidad}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         ${sale.totalAmount.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {sale.saleDate}
+                        {new Date(sale.saleDate).toLocaleString()}
                       </td>
                     </tr>
                   ))}

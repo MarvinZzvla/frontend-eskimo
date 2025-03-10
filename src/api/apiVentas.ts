@@ -30,6 +30,20 @@ export const getVentas = async (startDate: string, endDate: string) => {
     throw new Error(error);
   }
 };
+export const getVentasByEmpleado = async (
+  id: number,
+  startDate: string,
+  endDate: string
+) => {
+  try {
+    const { data } = await apiClient.get(
+      `/ventas/${id}?startDate=${startDate}&endDate=${endDate}`
+    );
+    return data;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 
 export const getEmpleadoMasVentas = async (
   startDate: string,
