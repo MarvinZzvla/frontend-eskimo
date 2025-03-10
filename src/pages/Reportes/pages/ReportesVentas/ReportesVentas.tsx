@@ -1,58 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarIcon } from "@heroicons/react/24/solid";
-
-interface Sale {
-  id: number;
-  productName: string;
-  employeeName: string;
-  salePrice: number;
-  quantity: number;
-  date: string;
-}
-
-const initialSales: Sale[] = [
-  {
-    id: 1,
-    productName: "Laptop",
-    employeeName: "Juan Pérez",
-    salePrice: 999.99,
-    quantity: 1,
-    date: "2023-05-28",
-  },
-  {
-    id: 2,
-    productName: "Mouse",
-    employeeName: "María García",
-    salePrice: 29.99,
-    quantity: 3,
-    date: "2023-05-28",
-  },
-  {
-    id: 3,
-    productName: "Monitor",
-    employeeName: "Carlos Rodríguez",
-    salePrice: 199.99,
-    quantity: 2,
-    date: "2023-05-27",
-  },
-  // Add more sample data as needed
-];
+import { getVentas, Venta } from "../../../../api/apiVentas";
 
 function ReportesVentas() {
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date(Date.now() + 86400000).toISOString().split("T")[0]
   );
-  const [sales] = useState<Sale[]>(initialSales);
+  const [sales, setSales] = useState<Venta[]>([]);
+
+  useEffect(() => {
+    const fetchSales = async () => {
+      setSales(await getVentas(startDate, endDate));
+    };
+    fetchSales();
+  }, [startDate, endDate]);
 
   const filteredSales = sales.filter(
-    (sale) => sale.date >= startDate && sale.date <= endDate
+    (sale) => sale.createdAt >= startDate && sale.createdAt <= endDate
   );
 
   const totalSales = filteredSales.reduce(
-    (sum, sale) => sum + sale.salePrice * sale.quantity,
+    (sum, sale) => sum + sale.precioVenta * sale.cantidad,
+    0
+  );
+  const totalSalesGanancias = filteredSales.reduce(
+    (sum, sale) => sum + (sale.precioVenta - sale.precio) * sale.cantidad,
     0
   );
 
@@ -121,25 +96,34 @@ function ReportesVentas() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Total
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ganancia
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredSales.map((sale) => (
                 <tr key={sale.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {sale.productName}
+                    {sale.producto}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {sale.employeeName}
+                    {sale.empleado}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    ${sale.salePrice.toFixed(2)}
+                    ${sale.precioVenta.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {sale.quantity}
+                    {sale.cantidad}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    ${(sale.salePrice * sale.quantity).toFixed(2)}
+                    ${(sale.precioVenta * sale.cantidad).toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-green-600">
+                    $
+                    {((sale.precioVenta - sale.precio) * sale.cantidad).toFixed(
+                      2
+                    )}
                   </td>
                 </tr>
               ))}
@@ -152,6 +136,9 @@ function ReportesVentas() {
         <h2 className="text-xl font-semibold mb-2">Resumen de Ventas</h2>
         <p className="text-2xl font-bold text-green-600">
           Total: ${totalSales.toFixed(2)}
+        </p>
+        <p className="text-2xl font-bold text-green-600">
+          Ganancias: ${totalSalesGanancias.toFixed(2)}
         </p>
       </div>
     </div>

@@ -10,6 +10,15 @@ export const getAssignments = async () => {
   }
 };
 
+export const getAssignmentsByEmpleado = async (id: number) => {
+  try {
+    const { data } = await apiClient.get(`/inventarioempleado/${id}`);
+    return data;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
 export const createAssignment = async (assignment: Assignment) => {
   try {
     const { data } = await apiClient.post("/inventarioempleado", assignment);

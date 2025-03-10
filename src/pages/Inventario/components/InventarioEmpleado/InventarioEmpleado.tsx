@@ -1,24 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   UserIcon,
   PhoneIcon,
-  CalendarIcon,
-  CurrencyDollarIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
+import { getEmployees } from "../../../../api/apiEmpleados";
+import { getAssignmentsByEmpleado } from "../../../../api/apiInventario";
 
 interface Employee {
   id: number;
-  name: string;
-  phone: string;
-  email: string;
-  department: string;
+  nombre: string;
+  telefono: string;
 }
 
 interface InventoryItem {
   id: number;
-  productName: string;
-  quantity: number;
+  producto: string;
+  cantidad: number;
 }
 
 interface Sale {
@@ -28,41 +26,6 @@ interface Sale {
   totalAmount: number;
   saleDate: string;
 }
-
-const employees: Employee[] = [
-  {
-    id: 1,
-    name: "Juan Pérez",
-    phone: "123-456-7890",
-    email: "juan@example.com",
-    department: "Ventas",
-  },
-  {
-    id: 2,
-    name: "María García",
-    phone: "098-765-4321",
-    email: "maria@example.com",
-    department: "Marketing",
-  },
-  {
-    id: 3,
-    name: "Carlos Rodríguez",
-    phone: "555-123-4567",
-    email: "carlos@example.com",
-    department: "Ventas",
-  },
-];
-
-const inventoryItems: InventoryItem[] = [
-  { id: 1, productName: "Laptop Dell XPS", quantity: 15 },
-  { id: 2, productName: 'Monitor LG 27"', quantity: 8 },
-  { id: 3, productName: "Teclado Mecánico", quantity: 20 },
-  { id: 4, productName: "Mouse Inalámbrico", quantity: 12 },
-  { id: 5, productName: "Auriculares Bluetooth", quantity: 6 },
-  { id: 6, productName: "Cámara Web HD", quantity: 4 },
-  { id: 7, productName: "Disco Duro Externo", quantity: 10 },
-  { id: 8, productName: "Impresora Multifuncional", quantity: 3 },
-];
 
 const sales: Sale[] = [
   {
@@ -141,6 +104,9 @@ function InventarioEmpleado() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null
   );
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -154,8 +120,23 @@ function InventarioEmpleado() {
     setSelectedEmployee(employee || null);
   };
 
+  useEffect(() => {
+    const fetchEmpleados = async () => {
+      setEmployees(await getEmployees());
+    };
+    fetchEmpleados();
+  }, []);
+  useEffect(() => {
+    const fetchInventario = async () => {
+      if (selectedEmployee) {
+        setInventoryItems(await getAssignmentsByEmpleado(selectedEmployee.id));
+      }
+    };
+    fetchInventario();
+  }, [selectedEmployee]);
+
   const filteredInventory = inventoryItems.filter((item) =>
-    item.productName.toLowerCase().includes(searchTerm.toLowerCase())
+    item.producto.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredSales = sales.filter((sale) => {
@@ -196,7 +177,7 @@ function InventarioEmpleado() {
           <option value="">Seleccionar empleado</option>
           {employees.map((employee) => (
             <option key={employee.id} value={employee.id}>
-              {employee.name}
+              {employee.nombre}
             </option>
           ))}
         </select>
@@ -211,19 +192,11 @@ function InventarioEmpleado() {
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center">
                 <UserIcon className="h-5 w-5 text-gray-500 mr-2" />
-                <span>{selectedEmployee.name}</span>
+                <span>{selectedEmployee.nombre}</span>
               </div>
               <div className="flex items-center">
                 <PhoneIcon className="h-5 w-5 text-gray-500 mr-2" />
-                <span>{selectedEmployee.phone}</span>
-              </div>
-              <div className="flex items-center">
-                <CalendarIcon className="h-5 w-5 text-gray-500 mr-2" />
-                <span>{selectedEmployee.email}</span>
-              </div>
-              <div className="flex items-center">
-                <CurrencyDollarIcon className="h-5 w-5 text-gray-500 mr-2" />
-                <span>{selectedEmployee.department}</span>
+                <span>{selectedEmployee.telefono}</span>
               </div>
             </div>
           </div>
@@ -256,14 +229,14 @@ function InventarioEmpleado() {
                   {filteredInventory.map((item) => (
                     <tr key={item.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {item.productName}
+                        {item.producto}
                       </td>
                       <td
                         className={`px-6 py-4 whitespace-nowrap font-medium ${getQuantityColor(
-                          item.quantity
+                          item.cantidad
                         )}`}
                       >
-                        {item.quantity}
+                        {item.cantidad}
                       </td>
                     </tr>
                   ))}

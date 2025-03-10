@@ -11,7 +11,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { addCompra, deleteCompras, getCompras } from "../../../api/apiCompras";
 import { getProducts } from "../../../api/apiProductos";
-import { SearchableDropdown } from "../../Ventas/Ventas";
+import SearchableDropdown from "../../Ventas/components/SearchableDropdown";
 
 interface Product {
   id: number;

@@ -3,7 +3,9 @@ import React from "react";
 type Props = {};
 
 function Home({}: Props) {
-  return <h1 className="text-2xl font-bold">Bienvenido Marvin Zavala</h1>;
+  const name = JSON.parse(localStorage.getItem("login") ?? "{}").name;
+
+  return <h1 className="text-2xl font-bold">Bienvenido {name}</h1>;
 }
 
 export default Home;

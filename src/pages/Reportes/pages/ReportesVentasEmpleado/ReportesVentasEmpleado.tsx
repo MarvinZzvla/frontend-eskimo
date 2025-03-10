@@ -1,29 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarIcon } from "@heroicons/react/24/solid";
+import { getEmpleadoMasVentas } from "../../../../api/apiVentas";
 
 interface EmployeeSales {
   id: number;
   name: string;
   totalSales: number;
 }
-
-const initialEmployeeSales: EmployeeSales[] = [
-  { id: 1, name: "Juan Pérez", totalSales: 5999.94 },
-  { id: 2, name: "María García", totalSales: 4589.97 },
-  { id: 3, name: "Carlos Rodríguez", totalSales: 3999.98 },
-  { id: 4, name: "Ana Martínez", totalSales: 3599.99 },
-  { id: 5, name: "Luis Fernández", totalSales: 2999.95 },
-  // Add more sample data as needed
-];
-
 function ReportesVentasEmpleado() {
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date(Date.now() + 86400000).toISOString().split("T")[0]
   );
-  const [employeeSales] = useState<EmployeeSales[]>(initialEmployeeSales);
+  const [employeeSales, setEmployeeSales] = useState<EmployeeSales[]>([]);
+
+  useEffect(() => {
+    const fetchVentas = async () => {
+      setEmployeeSales(await getEmpleadoMasVentas(startDate, endDate));
+    };
+    fetchVentas();
+  }, [startDate, endDate]);
 
   // In a real application, you would filter the sales based on the date range
   const sortedEmployeeSales = [...employeeSales].sort(

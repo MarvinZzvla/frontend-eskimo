@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarIcon } from "@heroicons/react/24/solid";
+import { getProductosMasVentas } from "../../../../api/apiVentas";
 
 interface ProductSales {
   id: number;
@@ -21,11 +22,18 @@ function ReportesProducto() {
     new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date(Date.now() + 86400000).toISOString().split("T")[0]
   );
-  const [productSales] = useState<ProductSales[]>(initialProductSales);
+  const [productSales, setProductSales] =
+    useState<ProductSales[]>(initialProductSales);
 
-  // In a real application, you would filter the sales based on the date range
+  useEffect(() => {
+    const fetchVentas = async () => {
+      setProductSales(await getProductosMasVentas(startDate, endDate));
+    };
+    fetchVentas();
+  }, [startDate, endDate]);
+
   const sortedProductSales = [...productSales].sort(
     (a, b) => b.quantitySold - a.quantitySold
   );

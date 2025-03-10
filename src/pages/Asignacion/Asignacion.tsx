@@ -3,12 +3,14 @@ import { useState, useEffect } from "react";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { getEmployees } from "../../api/apiEmpleados";
 import { getProducts } from "../../api/apiProductos";
-import { SearchableDropdown } from "../Ventas/Ventas";
+
 import {
   createAssignment,
   deleteAssignment,
   getAssignments,
 } from "../../api/apiInventario";
+import toast, { Toaster } from "react-hot-toast";
+import SearchableDropdown from "../Ventas/components/SearchableDropdown";
 
 export interface Product {
   id: number;
@@ -104,6 +106,10 @@ function Asignacion() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (quantity > (selectedInfoProduct?.cantidad ?? 0)) {
+      toast.error("No hay suficiente producto disponible");
+      return;
+    }
     if (selectedProduct && selectedEmployee && quantity > 0) {
       const newAssignment: Assignment = {
         empleadoId: selectedInfoEmployee?.id,
@@ -139,6 +145,8 @@ function Asignacion() {
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
         Asignar Productos a Empleado
       </h1>
+
+      <Toaster />
 
       <form
         onSubmit={handleSubmit}

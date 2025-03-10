@@ -2,14 +2,15 @@ import type React from "react";
 import { useState, useEffect, useRef } from "react";
 import {
   PlusIcon,
-  ChevronDownIcon,
-  CheckIcon,
   ShoppingCartIcon,
   TrashIcon,
   UserIcon,
 } from "@heroicons/react/24/solid";
 import { getEmployees } from "../../api/apiEmpleados";
-import { getProducts } from "../../api/apiProductos";
+import { getProductsByEmpleado } from "../../api/apiProductos";
+import SearchableDropdown from "./components/SearchableDropdown";
+import { createVenta, Venta } from "../../api/apiVentas";
+import toast, { Toaster } from "react-hot-toast";
 
 interface Employee {
   id: number;
@@ -19,7 +20,9 @@ interface Employee {
 interface Product {
   id: number;
   producto: string;
+  precioCompra: number;
   precio: number;
+  cantidad: number;
 }
 
 interface SaleItem {
@@ -27,112 +30,16 @@ interface SaleItem {
   productId: number;
   productName: string;
   quantity: number;
+  pricePurchase: number;
   price: number;
   total: number;
 }
 
-const initialProducts: Product[] = [
-  { id: 1, producto: "Producto 1", precio: 10.99 },
-  { id: 2, producto: "Producto 2", precio: 15.99 },
-  { id: 3, producto: "Producto 3", precio: 20.99 },
-  { id: 4, producto: "Producto 4", precio: 25.99 },
-  { id: 5, producto: "Producto 5", precio: 30.99 },
-];
-
-interface SearchableDropdownProps {
-  items: Array<{ id: number; nombre?: string; producto?: string }>;
-  selectedItem: number;
-  setSelectedItem: (id: number) => void;
-  placeholder: string;
-  disabled?: boolean;
-}
-
-export function SearchableDropdown({
-  items,
-  selectedItem,
-  setSelectedItem,
-  placeholder,
-  disabled = false,
-}: SearchableDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const dropdownRef = useRef(null);
-
-  const filteredItems = items.filter(
-    (item) =>
-      item.producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <div
-        className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex justify-between items-center ${
-          disabled ? "bg-gray-100" : ""
-        }`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-      >
-        <span>
-          {selectedItem
-            ? items.find((i) => i.id === selectedItem)?.producto ||
-              items.find((i) => i.id === selectedItem)?.nombre
-            : placeholder}
-        </span>
-        <ChevronDownIcon
-          className={`h-5 w-5 ${disabled ? "text-gray-400" : "text-gray-600"}`}
-        />
-      </div>
-      {isOpen && !disabled && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-          <input
-            type="text"
-            className="w-full px-3 py-2 border-b border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <ul className="max-h-60 overflow-y-auto">
-            {filteredItems.map((item) => (
-              <li
-                key={item.id}
-                className={`px-3 py-2 cursor-pointer hover:bg-gray-100 flex justify-between items-center ${
-                  selectedItem === item.id ? "bg-blue-100" : ""
-                }`}
-                onClick={() => {
-                  setSelectedItem(item.id);
-                  setIsOpen(false);
-                }}
-              >
-                {item.nombre || item.producto}
-                {selectedItem === item.id && (
-                  <CheckIcon className="h-5 w-5 text-blue-500" />
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function Ventas() {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<number>(0);
+  const [selectedInfoProduct, setSelectedInfoProduct] = useState<Product>();
   const [selectedProduct, setSelectedProduct] = useState<number>(0);
   const [salePrice, setSalePrice] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
@@ -146,20 +53,39 @@ function Ventas() {
   }, []);
   useEffect(() => {
     const fetchProductos = async () => {
-      setProducts(await getProducts());
+      if (selectedEmployee) {
+        setProducts(await getProductsByEmpleado(selectedEmployee));
+      }
     };
     fetchProductos();
-  }, []);
+  }, [selectedEmployee]);
 
   useEffect(() => {
     const product = products.find((p) => p.id === selectedProduct);
     if (product) {
+      //console.log(product);
       setSalePrice(product.precio);
+      setSelectedInfoProduct(product);
     }
   }, [selectedProduct, products]);
 
+  const updateQuantity = (id: number, cantidad: number) => {
+    setProducts((prev) =>
+      prev.map((product) =>
+        product.id === id
+          ? { ...product, cantidad: product.cantidad + cantidad }
+          : product
+      )
+    );
+  };
+
   const handleAddToCart = (e: React.FormEvent) => {
     e.preventDefault();
+    if (quantity > (selectedInfoProduct?.cantidad || 0)) {
+      toast.error("No dispone de la cantidad suficiente");
+      return;
+    }
+    updateQuantity(selectedProduct, quantity * -1);
     if (selectedEmployee && selectedProduct && salePrice > 0 && quantity > 0) {
       const newSale: SaleItem = {
         id: Date.now(),
@@ -168,35 +94,70 @@ function Ventas() {
           products.find((p) => p.id === selectedProduct)?.producto || "",
         quantity: quantity,
         price: salePrice,
+        pricePurchase: selectedInfoProduct?.precioCompra || 0,
         total: salePrice * quantity,
       };
       setCart((prev) => [...prev, newSale]);
-      setSelectedProduct(0);
-      setSalePrice(0);
-      setQuantity(1);
+      resetForm();
     }
+  };
+
+  const resetForm = () => {
+    // setSelectedProduct(0);
+    setSalePrice(0);
+    setQuantity(1);
   };
 
   const handleRemoveFromCart = (id: number) => {
+    const productRestored = cart.find((item) => item.id === id);
+    updateQuantity(
+      productRestored?.productId || 0,
+      productRestored?.quantity || 0
+    );
     setCart((prev) => prev.filter((item) => item.id !== id));
     if (cart.length === 1) {
       setSelectedEmployee(0);
+      setSelectedProduct(0);
+      setSelectedInfoProduct(undefined);
     }
   };
 
-  const handleSubmitSales = () => {
-    console.log("Submitting sales:", {
-      employee: employees.find((e) => e.id === selectedEmployee),
-      sales: cart,
+  const handleSubmitSales = async () => {
+    try {
+      await createVenta(parseCart(cart));
+      setCart([]);
+      setSelectedEmployee(0);
+      setSelectedProduct(0);
+      setSelectedInfoProduct(undefined);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const parseCart = (cart: SaleItem[]): Venta[] => {
+    const ventas: Venta[] = [];
+    cart.map((item) => {
+      const venta: Venta = {
+        productoId: item.productId,
+        producto: item.productName,
+        empleadoId: selectedEmployee,
+        empleado:
+          employees.find((emp) => emp.id === selectedEmployee)?.nombre ?? "",
+        precio: item.pricePurchase,
+        precioVenta: item.price,
+        cantidad: item.quantity,
+      };
+      ventas.push(venta);
     });
-    setCart([]);
-    setSelectedEmployee(0);
+
+    return ventas;
   };
 
   const totalSales = cart.reduce((sum, item) => sum + item.total, 0);
 
   return (
     <div className="container overflow-y-auto max-h-screen p-4 bg-gray-100 min-h-screen">
+      <Toaster />
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
         Registro de Ventas
       </h1>
@@ -233,6 +194,7 @@ function Ventas() {
               selectedItem={selectedProduct}
               setSelectedItem={setSelectedProduct}
               placeholder="Seleccionar producto"
+              disabled={!selectedEmployee}
             />
           </div>
           <div>
@@ -240,7 +202,18 @@ function Ventas() {
               htmlFor="quantity"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Cantidad
+              Cantidad:{" "}
+              <span
+                className={`${
+                  (selectedInfoProduct?.cantidad ?? 0) > 10
+                    ? "text-green-500"
+                    : (selectedInfoProduct?.cantidad ?? 0) > 5
+                    ? "text-yellow-500"
+                    : "text-red-500"
+                }`}
+              >
+                {selectedInfoProduct?.cantidad}
+              </span>
             </label>
             <input
               type="number"
@@ -249,6 +222,7 @@ function Ventas() {
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
               min="1"
+              disabled={!selectedEmployee}
               required
             />
           </div>

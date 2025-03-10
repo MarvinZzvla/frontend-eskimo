@@ -9,6 +9,14 @@ export const getProducts = async () => {
     throw new Error(error);
   }
 };
+export const getProductsByEmpleado = async (id: number) => {
+  try {
+    const { data } = await apiClient.get(`/products/${id}`);
+    return data;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 
 export const addProduct = async (product: Product) => {
   try {
