@@ -72,7 +72,7 @@ function InventarioEmpleado() {
       }
     };
     fetchSales();
-  }, [selectedEmployee]);
+  }, [selectedEmployee, startDate, endDate]);
 
   const filteredInventory = inventoryItems.filter((item) =>
     item.producto.toLowerCase().includes(searchTerm.toLowerCase())
