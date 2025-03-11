@@ -17,6 +17,7 @@ import Users from "./pages/Settings/pages/Users/Users";
 import Negocio from "./pages/Settings/pages/Negocio/Negocio";
 import ProtectedRoute from "./components/ProtectedRoutes/ProtectedRoute";
 import InventarioNegocio from "./pages/Inventario/components/InventarioNegocio";
+import SubscriptionExpired from "./pages/SubscriptionExpired/SubscriptionExpired";
 function App() {
   const location = useLocation();
   const hideNavBarRoutes = ["/login"];
@@ -26,6 +27,7 @@ function App() {
       <div className="flex-1 p-4">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/subscription" element={<SubscriptionExpired />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Home />} />
             <Route path="/asignacion" element={<Asignacion />} />
