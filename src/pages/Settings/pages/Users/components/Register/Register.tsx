@@ -1,25 +1,56 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   UserIcon,
   EnvelopeIcon,
   LockClosedIcon,
 } from "@heroicons/react/24/solid";
+import { createUser, updateUser, User } from "../../../../../../api/apiUsers";
 
-function Register({ onClose }: { onClose: (s: boolean) => void }) {
+function Register({
+  onClose,
+  editingUser,
+}: {
+  onClose: (s: boolean) => void;
+  editingUser: User | null;
+}) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (editingUser) {
+      setName(editingUser.name);
+      setEmail(editingUser.email);
+      setRole(editingUser.role);
+    } else {
+      setName("");
+      setEmail("");
+      setRole("");
+    }
+  }, [editingUser]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Here you would typically handle the registration logic
-    console.log("Registration attempt with:", {
+    const user: User = {
       name,
       email,
       password,
       role,
-    });
+    };
+    console.log("Registration attempt with:", user);
+    try {
+      if (editingUser) {
+        await updateUser(editingUser.id || 0, user);
+      } else {
+        await createUser(user);
+      }
+      onClose(false);
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -96,7 +127,7 @@ function Register({ onClose }: { onClose: (s: boolean) => void }) {
                   name="password"
                   type="password"
                   autoComplete="new-password"
-                  required
+                  required={!editingUser}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Contraseña"
                   value={password}
@@ -111,7 +142,7 @@ function Register({ onClose }: { onClose: (s: boolean) => void }) {
               <select
                 id="role"
                 name="role"
-                required
+                required={!editingUser}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}

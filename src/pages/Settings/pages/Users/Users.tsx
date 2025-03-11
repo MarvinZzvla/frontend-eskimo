@@ -8,12 +8,13 @@ import {
 } from "@heroicons/react/24/solid";
 import Register from "./components/Register/Register";
 import { MailIcon, User } from "lucide-react";
-import { getUsers } from "../../../../api/apiUsers";
+import { deleteUser, getUsers } from "../../../../api/apiUsers";
 
 interface User {
   id: number;
   name: string;
   email: string;
+  password: string;
   role: string;
 }
 function Users() {
@@ -43,7 +44,6 @@ function Users() {
   );
 
   const handleOpenForm = (user: User | null = null) => {
-    console.log(user);
     if (user) {
       setEditingUser(user);
       setNewUser({ name: user.name, email: user.email, role: user.role });
@@ -51,30 +51,18 @@ function Users() {
       setEditingUser(null);
       setNewUser({ name: "", email: "", role: "" });
     }
+
     setIsFormOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newUser.name && newUser.email && newUser.role) {
-      if (editingUser) {
-        setUsers(
-          users.map((usr) =>
-            usr.id === editingUser.id ? { ...usr, ...newUser } : usr
-          )
-        );
-      } else {
-        setUsers([...users, { ...newUser, id: Date.now() }]);
-      }
-      setNewUser({ name: "", email: "", role: "" });
-      setIsFormOpen(false);
-      setEditingUser(null);
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteUser(id);
+      setUsers(users.filter((usr) => usr.id !== id));
+      setDeleteConfirmation(null);
+    } catch (error) {
+      console.error(error);
     }
-  };
-
-  const handleDelete = (id: number) => {
-    setUsers(users.filter((usr) => usr.id !== id));
-    setDeleteConfirmation(null);
   };
 
   return (
@@ -156,7 +144,7 @@ function Users() {
 
       {isFormOpen && (
         <div className="fixed inset-0 bg-black opacity-90 overflow-y-auto h-full w-full flex items-center justify-center">
-          <Register onClose={setIsFormOpen} />
+          <Register onClose={setIsFormOpen} editingUser={editingUser} />
         </div>
       )}
     </div>
